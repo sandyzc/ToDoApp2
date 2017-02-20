@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/addtask"
+        android:title="@string/add"
+        android:icon="@drawable/add_new_task"
+            app:showAsAction="always"
+        />
+    <item
+        android:id="@+id/compleated_tasks"
+        android:title="@string/compleated"
+        android:icon="@drawable/complete"
+        app:showAsAction="always"
+        />
+</menu>
