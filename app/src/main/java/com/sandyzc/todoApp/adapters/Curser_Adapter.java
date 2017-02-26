@@ -31,15 +31,17 @@ public class Curser_Adapter extends CursorAdapter {
         TextView taskk = (TextView) view.findViewById(R.id.task);
         TextView taskdesc = (TextView) view.findViewById(R.id.taskdescp);
         TextView targetdate = (TextView) view.findViewById(R.id.targetdate);
+        TextView heading =(TextView)view.findViewById(R.id.heading);
 
 
         String task = cursor.getString(1);
-        String descp = cursor.getString(3);
-        String date = cursor.getString(2);
+        String descp = cursor.getString(2);
+        String date = cursor.getString(3);
 
         taskk.setText(task);
         taskdesc.setText(descp);
         targetdate.setText(date);
+        heading.setText(task);
 
 
 

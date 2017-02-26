@@ -18,12 +18,12 @@ public class DbHealper extends SQLiteOpenHelper{
 
     private static final String DB_NAME = "ToDoData.db";
     private static final int DB_VER = 1;
-    private static final String TABLE_NAME = "data";
-    private static final String ID = "_id";
-    private static final String TITLE = " title ";
-    private static final String DESCRIPTION = " descp ";
-    private static final String DATE = " date ";
-    private static final String STATUS = " status ";
+    public static final String TABLE_NAME = "data";
+    public static final String ID = "_id";
+    public static final String TITLE = " title ";
+    public static final String DESCRIPTION = " descp ";
+    public static final String DATE = " date ";
+    public static final String STATUS = " status ";
     private Context ctx;
     private SQLiteDatabase database;
 
@@ -98,6 +98,14 @@ public class DbHealper extends SQLiteOpenHelper{
         values.put(STATUS,0);
         return this.database.insert(TABLE_NAME,null,values);
     }
+
+    public int updateRecords(String table, ContentValues values,
+                             String whereClause, String[] whereArgs) {
+
+        int a = database.update(table, values, whereClause, whereArgs);
+        return a;
+    }
+
 
 
 }

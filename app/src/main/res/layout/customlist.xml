@@ -15,23 +15,31 @@
         <TextView
             android:background="@color/colorPrimary"
             android:layout_width="match_parent"
-            android:layout_height="20sp"
+            android:layout_height="30sp"
             android:textColor="#ffff"
+            android:textStyle="bold"
+            android:textAlignment="center"
             android:id="@+id/heading" />
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="30sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
             android:id="@+id/task" />
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="30sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
             android:id="@+id/taskdescp" />
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="30sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
             android:id="@+id/targetdate" />
 
 
