@@ -4,10 +4,23 @@ package com.sandyzc.todoApp.beans;
 
 public class beans {
 
-    String Title;
-    String Descp;
-    String Date;
-    int Status;
+    private String Title;
+    private String Descp;
+    private String Date;
+    private int Status;
+    private int id;
+
+    public beans(){
+
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return Title;

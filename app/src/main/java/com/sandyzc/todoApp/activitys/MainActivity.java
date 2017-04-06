@@ -1,10 +1,8 @@
 package com.sandyzc.todoApp.activitys;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.ContentValues;
 import android.content.DialogInterface;
-import android.database.Cursor;
+import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -20,21 +18,36 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.sandyzc.todoApp.DateComparator;
 import com.sandyzc.todoApp.R;
-import com.sandyzc.todoApp.adapters.Curser_Adapter;
+import com.sandyzc.todoApp.adapters.AdaPter;
 import com.sandyzc.todoApp.beans.beans;
 import com.sandyzc.todoApp.database.DbHealper;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
 
 
     ListView listView;
+    //db handler
     DbHealper db;
-    Curser_Adapter curseradapter;
-    Cursor cursor;
+
+    //array for data
+    ArrayList<beans> taskArraylist;
+
+    AdaPter taskAdapter;
+
+
+    //database
     SQLiteDatabase database;
+
+    //for context menu
+    private static final int MarkAsCompleated = 100;
+    private static final int DelteTask = 101;
+
     String selected;
 
 
@@ -46,26 +59,37 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.list);
         db = new DbHealper(this);
 
+
         DbHealper handler = new DbHealper(this);
 
         database = handler.getWritableDatabase();
 
-        cursor = database.rawQuery("SELECT  * FROM data ", null);
 
-        curseradapter = new Curser_Adapter(this, cursor);
+        taskArraylist = db.getAllTasks();
+        Collections.sort(taskArraylist, new DateComparator());
+        taskAdapter = new AdaPter(taskArraylist, this);
 
-        listView.setAdapter(curseradapter);
+
+        listView.setAdapter(taskAdapter);
+
         registerForContextMenu(listView);
+
+        //update task from the list
+
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                AlertDialog.Builder listdialog = new AlertDialog.Builder(MainActivity.this);
+                final beans curenttask = (beans) parent.getAdapter().getItem(position);
+
+                final AlertDialog.Builder listdialog = new AlertDialog.Builder(MainActivity.this);
+
+
                 LinearLayout linearLayout = new LinearLayout(MainActivity.this);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
 
                 final EditText Title = new EditText(MainActivity.this);
-                Title.setText(cursor.getString(1));
+                Title.setText(curenttask.getTitle());
                 Title.setMaxLines(1);
 
 
@@ -75,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 linearLayout.addView(Title);
 
                 final EditText Task = new EditText(MainActivity.this);
-                Task.setText(cursor.getString(2));
+                Task.setText(curenttask.getDescp());
 
                 if (Task.length() < 2) {
                     Task.setError("Enter Valid Task");
@@ -85,32 +109,34 @@ public class MainActivity extends AppCompatActivity {
 
                 final DatePicker datePicker2 = new DatePicker(MainActivity.this);
                 getDateFromDatePicker(datePicker2);
+
                 linearLayout.addView(datePicker2);
                 listdialog.setView(linearLayout);
 
                 listdialog.setPositiveButton("SAVE", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        ContentValues vals = new ContentValues();
-                      vals.put(DbHealper.TITLE,Title.getText().toString().trim());
-                        vals.put(DbHealper.DESCRIPTION,Task.getText().toString().trim());
-                        vals.put(DbHealper.DATE,selected);
-                        String selct =String.valueOf( cursor.getInt(0));
-                        database.update(DbHealper.TABLE_NAME,vals,selct,null);
-                        updateUI();
+
+
+                        db.updateTask(curenttask, Title.getText().toString(), Task.getText().toString(), selected);
+
+                        refreshlist();
+
 
                     }
                 });
 
+                listdialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
 
+                        dialog.dismiss();
 
+                    }
+                });
 
-
+                listdialog.setCancelable(false);
                 listdialog.show();
-
-
-
-
 
 
             }
@@ -118,6 +144,58 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        menu.setHeaderTitle("Choose Action");
+        menu.add(0, MarkAsCompleated, 1, "I've Compleated this Task");
+        menu.add(0, DelteTask, 2, "Delete This Task");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        int index = info.position;
+//mark the task as compleated
+        if (item.getItemId() == MarkAsCompleated && item.getGroupId() == 0) {
+            beans theTask = (beans) listView.getAdapter().getItem(index);
+
+            if (theTask.getStatus() == 1) {
+                return true;
+            }
+
+            int updatestaus = db.updateTaskStatus(theTask.getId(), 1);
+
+            refreshlist();
+
+            Toast.makeText(MainActivity.this, "Task Compleated", Toast.LENGTH_LONG).show();
+            return true;
+
+        }
+
+        //delete the task if not intrested in the task anymore :p
+
+        if (item.getItemId() == DelteTask && item.getGroupId() == 0) {
+            beans delete = (beans) listView.getAdapter().getItem(index);
+
+            boolean isdeleded = db.deleteTask(delete.getId());
+
+            if (isdeleded) {
+
+                refreshlist();
+                Toast.makeText(MainActivity.this, "Task Deleted", Toast.LENGTH_SHORT).show();
+            }
+        }
+        return true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        refreshlist();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -134,6 +212,10 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.addtask) {
             alert();
             return true;
+        }
+        if (id == R.id.compleated_tasks) {
+            Intent intent = new Intent(MainActivity.this, TaskCompleated.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -165,6 +247,8 @@ public class MainActivity extends AppCompatActivity {
 
         final DatePicker datePicker = new DatePicker(this);
         getDateFromDatePicker(datePicker);
+        // final String targetDate = String.format("%02d", datePicker.getDayOfMonth()) +"/" +
+        //     String.format("%02d", Integer.valueOf(datePicker.getMonth()+1)) + "/" + datePicker.getYear();
         linearLayout.addView(datePicker);
         additem.setView(linearLayout);
 
@@ -175,13 +259,11 @@ public class MainActivity extends AppCompatActivity {
 
 
                 if (Title.length() > 2 && Task.length() > 2) {
-                    beans task = new beans();
-                    task.setTitle(Title.getText().toString());
-                    task.setDescp(Task.getText().toString());
-                    task.setDate(selected);
+
                     db.open();
-                    db.insertData(task);
-                    updateUI();
+                    db.insertData(Title.getText().toString(), Task.getText().toString(), selected, 0);
+                    refreshlist();
+
                 } else {
                     Toast.makeText(MainActivity.this, "Feilds cannot be empty", Toast.LENGTH_LONG).show();
 
@@ -202,11 +284,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Updates List on adding the new task
-    private void updateUI() {
 
-        Cursor update = database.rawQuery("SELECT  * FROM data ", null);
-        curseradapter.changeCursor(update);
+    private void refreshlist() {
 
+        taskArraylist = db.getAllTasks();
+        Collections.sort(taskArraylist, new DateComparator());
+        taskAdapter.setmTaskArrayList(taskArraylist);
+        taskAdapter.notifyDataSetChanged();
     }
 
     // Retreive date from datepicker
@@ -218,7 +302,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
 
-                selected = String.valueOf(dayOfMonth) + " / " + String.valueOf(monthOfYear + 1) + " / " + String.valueOf(year);
+                selected = String.format("%02d", view.getDayOfMonth()) + "/" +
+                        String.format("%02d", Integer.valueOf(view.getMonth() + 1)) + "/" + view.getYear();
+
+                //  selected = String.valueOf(dayOfMonth) + " / " + String.valueOf(monthOfYear + 1) + " / " + String.valueOf(year);
 
             }
 
